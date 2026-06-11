@@ -12,11 +12,12 @@ exchange exercise referrals and progress reports with healthcare systems using t
 Vivo acting as a **Light Service Provider** (per the PA IG):
 
 - **Dashboard** - referral pipeline KPIs, connected care managers, activity feed
-- **Referrals** - inbound referral inbox with status workflow (New, Accepted, In Progress, On Hold,
-  Completed, Rejected), referral detail with patient/referral/messages panels, accept and decline flows
+- **Referrals** - one worklist for referred patients: referral status workflow (New, Accepted,
+  In Progress, On Hold, Completed, Rejected) alongside Vivo membership status, classes attended,
+  and next report due. The unified detail screen has patient/referral/messages panels, accept and
+  decline flows, the attendance log with FHIR sync status, and the report actions
 - **Enroll member** - 3-step wizard converting a referral into a Vivo member (plan, exercise level,
   baseline assessment, HubSpot/Momence sync)
-- **Members** - referred-member roster and per-member attendance log with FHIR sync status
 - **Submit progress report** - auto-calculated Exercise Vital Sign measures with FHIR JSON preview
 - **Close out referral** - final report with measures vs baseline
 - **Connections** - care manager FHIR endpoint management (SMART Backend Services)

@@ -11,11 +11,11 @@
   // ------------------------------------------------------------
   function SubmitReport({ nav, params }) {
     const r = VH.byId(params.id) || VH.byId('R-1039');
-    const D = V.ROBERT;
+    const sessions = V.ATTENDANCE[r.id] || [];
     const [period, setPeriod] = useState('Jun 1 – Jun 7, 2026');
     const [statusText, setStatusText] = useState('Completed week 4 of program, attendance excellent.');
     const [note, setNote] = useState('');
-    const [included, setIncluded] = useState(D.attendance.map(() => true));
+    const [included, setIncluded] = useState(sessions.map(() => true));
     const fhir = {
       resourceType: 'Observation', status: 'final',
       category: [{ coding: [{ code: 'activity' }] }],
@@ -27,11 +27,11 @@
         { code: { text: 'Strength days/week' }, valueQuantity: { value: 2, unit: 'days' } },
       ],
     };
-    const send = () => { window.showToast(`Progress report sent to ${r.provider.org}.`); nav('member-detail', { id: r.id }); };
+    const send = () => { window.showToast(`Progress report sent to ${r.provider.org}.`); nav('referral-detail', { id: r.id }); };
 
     return React.createElement('div', null,
-      React.createElement('div', { className: 'back-link', onClick: () => nav('member-detail', { id: r.id }) },
-        React.createElement('i', { className: 'ri-arrow-left-line' }), 'Back to member'),
+      React.createElement('div', { className: 'back-link', onClick: () => nav('referral-detail', { id: r.id }) },
+        React.createElement('i', { className: 'ri-arrow-left-line' }), 'Back to referral'),
       React.createElement(PageHeader, { title: 'Submit progress report' }),
       React.createElement('p', { className: 'text-muted', style: { marginTop: -8, marginBottom: 20 } },
         'Reporting on ', React.createElement('strong', null, r.name), ' to ', React.createElement('strong', null, r.provider.org), ' · ', r.provider.practitioner),
@@ -66,7 +66,7 @@
         React.createElement('div', { className: 'v-grid' },
           React.createElement(Card, { title: `Included sessions (${included.filter(Boolean).length})` },
             React.createElement('div', null,
-              D.attendance.map((a, i) => React.createElement('div', { key: i, className: 'check-row', style: { alignItems: 'center' } },
+              sessions.map((a, i) => React.createElement('div', { key: i, className: 'check-row', style: { alignItems: 'center' } },
                 React.createElement('input', { type: 'checkbox', id: 'inc-' + i, checked: included[i], onChange: () => setIncluded(s => s.map((v, j) => j === i ? !v : v)) }),
                 React.createElement('label', { htmlFor: 'inc-' + i, style: { flex: 1 } },
                   React.createElement('div', { style: { fontWeight: 600, fontSize: 13 } }, a.cls),

@@ -1,6 +1,6 @@
 // ============================================================
 // Vivo Care Connect — Screens B
-// Enroll Member (wizard) · Referred Members Roster · Member Progress
+// Enroll Member (wizard)
 // ============================================================
 (function () {
   const { useState } = React;
@@ -33,7 +33,7 @@
     const steps = ['Contact info', 'Program setup', 'Sync & confirm'];
 
     const toggle = (set, key) => set(s => ({ ...s, [key]: !s[key] }));
-    const finish = () => { window.showToast(`${r.name} enrolled as a Vivo member.`); nav('members', {}); };
+    const finish = () => { window.showToast(`${r.name} enrolled as a Vivo member.`); nav('referral-detail', { id: r.id }); };
 
     return React.createElement('div', null,
       React.createElement('div', { className: 'back-link', onClick: () => nav('referral-detail', { id: r.id }) },
@@ -156,83 +156,6 @@
       React.createElement('span', { style: { fontSize: 13, fontWeight: 600, textAlign: 'right' } }, value));
   }
 
-  // ------------------------------------------------------------
-  // 5. REFERRED MEMBERS ROSTER
-  // ------------------------------------------------------------
-  function MembersRoster({ nav }) {
-    return React.createElement('div', null,
-      React.createElement(PageHeader, { title: 'Referred members' }),
-      React.createElement('div', { className: 'card', style: { overflow: 'hidden' } },
-        React.createElement('table', { className: 'table' },
-          React.createElement('thead', null, React.createElement('tr', null,
-            ['Member', 'Referral source', 'Vivo status', 'Classes (30d)', 'Next report due'].map((h, i) =>
-              React.createElement('th', { key: i }, h)))),
-          React.createElement('tbody', null,
-            V.MEMBERS.map(r => React.createElement('tr', {
-              key: r.id, className: 'clickable',
-              onClick: () => nav('member-detail', { id: r.id }),
-            },
-              React.createElement('td', null,
-                React.createElement('div', { style: { fontWeight: 600, fontSize: 13.5 } }, r.name),
-                React.createElement('div', { className: 'muted-sm' }, `Age ${r.age}`)),
-              React.createElement('td', { style: { fontSize: 13 } }, r.source),
-              React.createElement('td', null, VH.vivoBadge(r.vivo)),
-              React.createElement('td', { style: { fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' } }, r.attended),
-              React.createElement('td', { style: { fontSize: 13, color: 'var(--app-text-secondary)' } }, r.nextDue),
-            )),
-          ),
-        ),
-      ),
-    );
-  }
 
-  // ------------------------------------------------------------
-  // 6. MEMBER PROGRESS DETAIL (Robert Alvarez)
-  // ------------------------------------------------------------
-  function MemberProgress({ nav, params }) {
-    const r = VH.byId(params.id) || VH.byId('R-1039');
-    const D = V.ROBERT;
-    return React.createElement('div', null,
-      React.createElement('div', { className: 'back-link', onClick: () => nav('members', {}) },
-        React.createElement('i', { className: 'ri-arrow-left-line' }), 'Back to members'),
-
-      React.createElement('div', { className: 'detail-head' },
-        React.createElement('div', { className: 'dh-left' },
-          React.createElement('div', null,
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } },
-              React.createElement('h1', null, r.name),
-              VH.vivoBadge('active')),
-            React.createElement('div', { className: 'text-muted', style: { fontSize: 14, marginTop: 2 } },
-              `Age ${r.age} · Referred by ${r.provider.org} · ${r.provider.practitioner}`)),
-        ),
-      ),
-
-      React.createElement(Card, { title: 'Attendance log', padded: false },
-        React.createElement('table', { className: 'table' },
-          React.createElement('thead', null, React.createElement('tr', null,
-            ['Class', 'Date & time', 'Trainer', 'Duration', 'Status'].map((h, i) =>
-              React.createElement('th', { key: i }, h)))),
-          React.createElement('tbody', null,
-            D.attendance.map((a, i) => React.createElement('tr', { key: i },
-              React.createElement('td', { style: { fontWeight: 600, fontSize: 13.5 } }, a.cls),
-              React.createElement('td', { style: { fontSize: 13, color: 'var(--app-text-secondary)' } }, a.date),
-              React.createElement('td', { style: { fontSize: 13 } }, a.trainer),
-              React.createElement('td', { style: { fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' } }, a.dur + ' min'),
-              React.createElement('td', null, React.createElement('span', { className: 'sync-ind ' + a.sync },
-                React.createElement('i', { className: a.sync === 'sent' ? 'ri-checkbox-circle-line' : 'ri-time-line' }),
-                a.sync === 'sent' ? 'Synced' : 'Pending')),
-            )),
-          ),
-        ),
-      ),
-    );
-  }
-  function StatTile({ label, value, sub }) {
-    return React.createElement('div', { className: 'stat-tile' },
-      React.createElement('div', { className: 'st-label' }, label),
-      React.createElement('div', { className: 'st-value' }, value),
-      React.createElement('div', { className: 'st-sub' }, sub));
-  }
-
-  Object.assign(window, { EnrollMember, MembersRoster, MemberProgress });
+  Object.assign(window, { EnrollMember });
 })();

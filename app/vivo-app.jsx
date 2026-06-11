@@ -7,7 +7,6 @@
   const NAV = [
     { id: 'dashboard', label: 'Dashboard', icon: 'ri-dashboard-line' },
     { id: 'referrals', label: 'Referrals', icon: 'ri-inbox-archive-line', badge: 3 },
-    { id: 'members', label: 'Members', icon: 'ri-team-line' },
     { id: 'connections', label: 'Connections', icon: 'ri-plug-line' },
     { id: 'log', label: 'Activity Log', icon: 'ri-terminal-box-line' },
   ];
@@ -16,7 +15,7 @@
   const PARENT = {
     dashboard: 'dashboard',
     referrals: 'referrals', 'referral-detail': 'referrals', enroll: 'referrals',
-    members: 'members', 'member-detail': 'members', 'submit-report': 'members', closeout: 'members',
+    'submit-report': 'referrals', closeout: 'referrals',
     connections: 'connections', log: 'log',
   };
 
@@ -25,8 +24,6 @@
     referrals: 'ReferralInbox',
     'referral-detail': 'ReferralDetail',
     enroll: 'EnrollMember',
-    members: 'MembersRoster',
-    'member-detail': 'MemberProgress',
     'submit-report': 'SubmitReport',
     closeout: 'CloseOut',
     connections: 'Connections',

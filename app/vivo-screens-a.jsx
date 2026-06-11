@@ -13,8 +13,8 @@
     const kpis = [
       { label: 'New referrals', value: 3, icon: 'ri-inbox-archive-line', bg: '#e7f1fb', fg: '#1c5d96', to: ['referrals', { filter: 'new' }] },
       { label: 'Awaiting enrollment', value: 2, icon: 'ri-user-add-line', bg: '#e3f3f6', fg: '#1c7384', to: ['referrals', { filter: 'accepted' }] },
-      { label: 'Active referred members', value: 14, icon: 'ri-team-line', bg: '#e6f4ec', fg: '#2f7345', to: ['members', {}] },
-      { label: 'Progress reports due', value: 5, icon: 'ri-file-chart-line', bg: '#fbf0dd', fg: '#97600a', to: ['members', {}] },
+      { label: 'Active referred members', value: 14, icon: 'ri-team-line', bg: '#e6f4ec', fg: '#2f7345', to: ['referrals', { filter: 'inprogress' }] },
+      { label: 'Progress reports due', value: 5, icon: 'ri-file-chart-line', bg: '#fbf0dd', fg: '#97600a', to: ['referrals', { filter: 'inprogress' }] },
     ];
     const toneColor = { blue: '#1c5d96', green: '#2f7345', teal: '#1c7384', amber: '#97600a' };
     const toneBg = { blue: '#e7f1fb', green: '#e6f4ec', teal: '#e3f3f6', amber: '#fbf0dd' };
@@ -114,20 +114,24 @@
       React.createElement('div', { className: 'card', style: { overflow: 'hidden' } },
         React.createElement('table', { className: 'table' },
           React.createElement('thead', null, React.createElement('tr', null,
-            ['Patient', 'Referred by', 'Service', 'Received', 'Status', ''].map((h, i) =>
+            ['Patient', 'Referred by', 'Received', 'Referral status', 'Vivo status', 'Classes (30d)', 'Next report due', ''].map((h, i) =>
               React.createElement('th', { key: i }, h)))),
           React.createElement('tbody', null,
             data.length === 0
-              ? React.createElement('tr', null, React.createElement('td', { colSpan: 6, style: { textAlign: 'center', padding: '48px 16px', color: 'var(--app-text-tertiary)' } }, 'No referrals match this filter.'))
+              ? React.createElement('tr', null, React.createElement('td', { colSpan: 8, style: { textAlign: 'center', padding: '48px 16px', color: 'var(--app-text-tertiary)' } }, 'No referrals match this filter.'))
               : data.map(r => React.createElement('tr', { key: r.id, className: 'clickable', onClick: () => nav('referral-detail', { id: r.id }) },
                 React.createElement('td', null,
                   React.createElement('div', { style: { fontWeight: 600, fontSize: 13.5 } }, r.name)),
                 React.createElement('td', null,
                   React.createElement('div', { style: { fontWeight: 500, fontSize: 13 } }, r.provider.practitioner),
                   React.createElement('div', { className: 'muted-sm' }, r.provider.org)),
-                React.createElement('td', { style: { fontSize: 13 } }, 'Physical activity program'),
                 React.createElement('td', { className: 'muted-sm' }, r.received),
                 React.createElement('td', null, VH.statusBadge(r.status)),
+                React.createElement('td', null, r.vivo ? VH.vivoBadge(r.vivo) : React.createElement('span', { className: 'muted-sm' }, '-')),
+                React.createElement('td', { style: { fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' } },
+                  r.attended || React.createElement('span', { className: 'muted-sm', style: { fontWeight: 400 } }, '-')),
+                React.createElement('td', { style: { fontSize: 13, color: 'var(--app-text-secondary)' } },
+                  r.nextDue || React.createElement('span', { className: 'muted-sm' }, '-')),
                 React.createElement('td', { style: { textAlign: 'right' } }, React.createElement(Button, {
                   size: 'sm', variant: 'outline-secondary', icon: 'ri-information-line',
                   onClick: e => { e.stopPropagation(); setDetail(r); } }, 'Details')),
@@ -152,6 +156,7 @@
           React.createElement('div', { style: { display: 'flex', gap: 32 } },
             React.createElement(IField, { label: 'Referral ID', value: detail.id, mono: true }),
             React.createElement(IField, { label: 'Order #', value: detail.order, mono: true })),
+          React.createElement(IField, { label: 'Service requested', value: detail.service }),
           React.createElement(IField, { label: 'Reason', value: detail.reason, strong: true }),
           React.createElement(IField, { label: 'Referred by', value: `${detail.provider.practitioner} · ${detail.provider.org}` }),
           detail.rejectReason && React.createElement(IField, { label: 'Decline reason', value: detail.rejectReason }),
@@ -207,6 +212,7 @@
             React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } },
               React.createElement('h1', null, r.name),
               VH.statusBadge(r.status),
+              r.vivo && VH.vivoBadge(r.vivo),
             ),
             React.createElement('div', { className: 'text-muted', style: { fontSize: 14, marginTop: 2 } },
               `Age ${r.age} · Referral ${r.id} · Received ${r.received}`),
@@ -217,7 +223,10 @@
           React.createElement(Button, { variant: 'primary', icon: 'ri-check-line', onClick: () => { window.showToast('Referral accepted. Ready to enroll.'); nav('enroll', { id: r.id }); } }, 'Accept referral'),
         ),
         r.status === 'accepted' && React.createElement(Button, { variant: 'primary', icon: 'ri-user-add-line', onClick: () => nav('enroll', { id: r.id }) }, 'Enroll member'),
-        r.status === 'inprogress' && React.createElement(Button, { variant: 'primary', icon: 'ri-line-chart-line', onClick: () => nav('member-detail', { id: r.id }) }, 'View progress'),
+        r.status === 'inprogress' && React.createElement('div', { className: 'tb-actions' },
+          React.createElement(Button, { variant: 'outline-secondary', icon: 'ri-flag-line', onClick: () => nav('closeout', { id: r.id }) }, 'Close out'),
+          React.createElement(Button, { variant: 'primary', icon: 'ri-send-plane-line', onClick: () => nav('submit-report', { id: r.id }) }, 'Submit progress report'),
+        ),
       ),
 
       // 3-column body
@@ -276,6 +285,28 @@
           }),
           React.createElement('div', { style: { display: 'flex', justifyContent: 'flex-end' } },
             React.createElement(Button, { variant: 'primary', size: 'sm', icon: 'ri-send-plane-line', onClick: sendMsg }, 'Send'),
+          ),
+        ),
+      ),
+
+      // Attendance log (only for enrolled members with logged classes)
+      (V.ATTENDANCE[r.id] || []).length > 0 && React.createElement('div', { style: { marginBottom: 16 } },
+        React.createElement(Card, { title: 'Attendance log', padded: false },
+          React.createElement('table', { className: 'table' },
+            React.createElement('thead', null, React.createElement('tr', null,
+              ['Class', 'Date & time', 'Trainer', 'Duration', 'Status'].map((h, i) =>
+                React.createElement('th', { key: i }, h)))),
+            React.createElement('tbody', null,
+              V.ATTENDANCE[r.id].map((a, i) => React.createElement('tr', { key: i },
+                React.createElement('td', { style: { fontWeight: 600, fontSize: 13.5 } }, a.cls),
+                React.createElement('td', { style: { fontSize: 13, color: 'var(--app-text-secondary)' } }, a.date),
+                React.createElement('td', { style: { fontSize: 13 } }, a.trainer),
+                React.createElement('td', { style: { fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' } }, a.dur + ' min'),
+                React.createElement('td', null, React.createElement('span', { className: 'sync-ind ' + a.sync },
+                  React.createElement('i', { className: a.sync === 'sent' ? 'ri-checkbox-circle-line' : 'ri-time-line' }),
+                  a.sync === 'sent' ? 'Synced' : 'Pending')),
+              )),
+            ),
           ),
         ),
       ),

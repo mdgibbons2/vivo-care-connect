@@ -36,7 +36,7 @@
       emergency: 'Lucia Alvarez (wife) — (770) 555-0144',
       org: 'emory', service: 'Referral to physical activity program',
       reason: 'Cardiac rehabilitation maintenance', received: 'May 12, 2026', receivedAgo: '4 weeks ago',
-      order: 'ORD-87903',
+      order: 'ORD-87903', vivo: 'active', attended: '9 of 12', nextDue: 'Jun 16, 2026',
       goals: ['150 min/week moderate exercise', 'Strength training 2× per week', 'Maintain resting HR < 90'],
       baseline: { daysWeek: 1, minWeek: 30, strengthDays: 0 },
       note: 'Cleared for moderate activity. Monitor exertion — recent stent. — Dr. Okafor',
@@ -48,7 +48,7 @@
       emergency: 'Carol Whitfield (daughter) — (404) 555-0190',
       org: 'grady', service: 'Referral to physical activity program',
       reason: 'Knee osteoarthritis', received: 'Jun 2, 2026', receivedAgo: '1 week ago',
-      order: 'ORD-88010',
+      order: 'ORD-88010', vivo: 'trial', attended: '2 of 4', nextDue: 'Jun 20, 2026',
       goals: ['Improve balance and mobility', 'Reduce fall risk'],
       baseline: { daysWeek: 0, minWeek: 0, strengthDays: 0 },
       note: 'Uses a cane. Level 1 recommended to start. — Dr. Lee',
@@ -60,7 +60,7 @@
       emergency: 'Ama Osei (wife) — (678) 555-0122',
       org: 'northside', service: 'Referral to physical activity program',
       reason: 'Type 2 diabetes — activity counseling', received: 'Mar 3, 2026', receivedAgo: '14 weeks ago',
-      order: 'ORD-86655',
+      order: 'ORD-86655', vivo: 'active', attended: '11 of 12',
       goals: ['150 min/week moderate exercise', 'Improve HbA1c'],
       baseline: { daysWeek: 1, minWeek: 40, strengthDays: 0 },
       note: 'Completed 12-week program with excellent attendance. — Dr. Raman',
@@ -96,7 +96,7 @@
       emergency: 'Renee Battle (daughter) — (404) 555-0156',
       org: 'grady', service: 'Referral to physical activity program',
       reason: 'Deconditioning post-hospitalization', received: 'Apr 20, 2026', receivedAgo: '7 weeks ago',
-      order: 'ORD-87401',
+      order: 'ORD-87401', vivo: 'cancelled', attended: '3 of 14', nextDue: 'Jun 8, 2026',
       goals: ['Rebuild strength and endurance', '120 min/week moderate exercise'],
       baseline: { daysWeek: 0, minWeek: 0, strengthDays: 0 },
       note: 'Recovering from pneumonia. Attendance has slipped recently — please follow up. — Dr. Lee',
@@ -120,7 +120,7 @@
       emergency: 'Chidi Nwosu (son) — (770) 555-0178',
       org: 'northside', service: 'Referral to physical activity program',
       reason: 'Osteopenia — weight-bearing exercise', received: 'Jun 5, 2026', receivedAgo: '5 days ago',
-      order: 'ORD-88120',
+      order: 'ORD-88120', vivo: 'trial', attended: '3 of 4', nextDue: 'Jun 18, 2026',
       goals: ['Weight-bearing strength 3× per week', 'Improve bone density'],
       baseline: { daysWeek: 2, minWeek: 70, strengthDays: 1 },
       note: 'Eager to start. Prefers morning classes. — Dr. Raman',
@@ -132,7 +132,7 @@
       emergency: 'Sofia Mendez (daughter) — (404) 555-0103',
       org: 'wellstar', service: 'Referral to physical activity program',
       reason: 'Frailty — fall prevention', received: 'Feb 16, 2026', receivedAgo: '17 weeks ago',
-      order: 'ORD-86200',
+      order: 'ORD-86200', vivo: 'active', attended: '10 of 12',
       goals: ['Improve balance', 'Reduce fall risk', '90 min/week activity'],
       baseline: { daysWeek: 0, minWeek: 0, strengthDays: 0 },
       note: 'Graduated program. Notable balance improvement. — Dr. Cho',
@@ -148,14 +148,10 @@
     { id: 'C3', name: 'Grady Health System', ehr: 'Epic', status: 'amber', lastSync: '3 hrs ago', baseUrl: 'https://fhir.gradyhealth.org/api/FHIR/R4', auth: 'SMART Backend Services', clientId: 'e5b2••••••••9a30', interval: '30 min', open: 3, warn: 'Access token expired — re-authentication required.' },
   ];
 
-  // ---- Robert Alvarez progress detail ----
-  const ROBERT = {
-    weeks: [
-      { wk: 'Wk 1', min: 60 }, { wk: 'Wk 2', min: 85 }, { wk: 'Wk 3', min: 110 }, { wk: 'Wk 4', min: 135 },
-    ],
-    thisWeek: { days: 3, min: 135, strengthDays: 2 },
-    goalMin: 150,
-    attendance: [
+  // ---- Attendance logs (keyed by referral id; enrolled members only) ----
+  // Each member takes ONE class type (Vivo, Vivo+, or Vivo Foundations) 2-3x/week.
+  const ATTENDANCE = {
+    'R-1039': [
       { date: 'Jun 9, 2026 10:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Renata Alves', sync: 'sent' },
       { date: 'Jun 5, 2026 9:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Marcus Bell', sync: 'sent' },
       { date: 'Jun 3, 2026 10:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Renata Alves', sync: 'pending' },
@@ -163,17 +159,32 @@
       { date: 'May 27, 2026 10:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Renata Alves', sync: 'sent' },
       { date: 'May 23, 2026 9:00 AM ET', cls: 'Vivo+', dur: 40, trainer: 'Marcus Bell', sync: 'sent' },
     ],
+    'R-1040': [
+      { date: 'Jun 8, 2026 11:00 AM ET', cls: 'Vivo Foundations', dur: 45, trainer: 'Dana Whitcomb', sync: 'pending' },
+      { date: 'Jun 4, 2026 11:00 AM ET', cls: 'Vivo Foundations', dur: 40, trainer: 'Dana Whitcomb', sync: 'sent' },
+    ],
+    'R-1031': [
+      { date: 'May 12, 2026 2:00 PM ET', cls: 'Vivo Foundations', dur: 40, trainer: 'Marcus Bell', sync: 'sent' },
+      { date: 'May 5, 2026 2:00 PM ET', cls: 'Vivo Foundations', dur: 45, trainer: 'Dana Whitcomb', sync: 'sent' },
+      { date: 'Apr 28, 2026 2:00 PM ET', cls: 'Vivo Foundations', dur: 45, trainer: 'Dana Whitcomb', sync: 'sent' },
+    ],
+    'R-1041': [
+      { date: 'Jun 8, 2026 9:00 AM ET', cls: 'Vivo', dur: 45, trainer: 'Renata Alves', sync: 'pending' },
+      { date: 'Jun 5, 2026 9:00 AM ET', cls: 'Vivo', dur: 45, trainer: 'Renata Alves', sync: 'sent' },
+      { date: 'Jun 2, 2026 9:00 AM ET', cls: 'Vivo', dur: 45, trainer: 'Marcus Bell', sync: 'sent' },
+    ],
+    'R-1021': [
+      { date: 'May 26, 2026 10:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Marcus Bell', sync: 'sent' },
+      { date: 'May 22, 2026 10:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Renata Alves', sync: 'sent' },
+      { date: 'May 19, 2026 10:00 AM ET', cls: 'Vivo+', dur: 45, trainer: 'Marcus Bell', sync: 'sent' },
+      { date: 'May 15, 2026 10:00 AM ET', cls: 'Vivo+', dur: 40, trainer: 'Marcus Bell', sync: 'sent' },
+    ],
+    'R-1009': [
+      { date: 'May 20, 2026 1:00 PM ET', cls: 'Vivo Foundations', dur: 45, trainer: 'Dana Whitcomb', sync: 'sent' },
+      { date: 'May 16, 2026 1:00 PM ET', cls: 'Vivo Foundations', dur: 40, trainer: 'Renata Alves', sync: 'sent' },
+      { date: 'May 13, 2026 1:00 PM ET', cls: 'Vivo Foundations', dur: 45, trainer: 'Dana Whitcomb', sync: 'sent' },
+    ],
   };
-
-  // ---- Referred members roster ----
-  const MEMBERS = [
-    { id: 'R-1039', name: 'Robert Alvarez', age: 68, source: 'Emory Cardiology', vivo: 'active', attended: '9 of 12', spark: [60,85,110,135], nextDue: 'Jun 16, 2026', overdue: false, color: palette[1] },
-    { id: 'R-1040', name: 'Doris Whitfield', age: 81, source: 'Grady Internal Medicine', vivo: 'trial', attended: '2 of 4', spark: [0,20,30,45], nextDue: 'Jun 20, 2026', overdue: false, color: palette[2] },
-    { id: 'R-1031', name: 'Gloria Battle', age: 78, source: 'Grady Internal Medicine', vivo: 'cancelled', attended: '3 of 14', spark: [40,55,30,20], nextDue: 'Jun 8, 2026', overdue: true, color: palette[6] },
-    { id: 'R-1041', name: 'Beatrice Nwosu', age: 64, source: 'Northside Family Medicine', vivo: 'trial', attended: '3 of 4', spark: [70,90,95,120], nextDue: 'Jun 18, 2026', overdue: false, color: palette[8] },
-    { id: 'R-1021', name: 'Frank Osei', age: 75, source: 'Northside Family Medicine', vivo: 'active', attended: '11 of 12', spark: [40,80,120,142], nextDue: 'Jun 7, 2026', overdue: true, color: palette[3] },
-    { id: 'R-1009', name: 'Walter Mendez', age: 83, source: 'Wellstar Geriatrics', vivo: 'active', attended: '10 of 12', spark: [0,30,60,90], nextDue: 'Jun 22, 2026', overdue: false, color: palette[9] },
-  ];
 
   // ---- Recent activity feed (dashboard) ----
   const FEED = [
@@ -224,7 +235,7 @@
     cancelled: { label: 'Cancelled', cls: 'cancelled' },
   };
 
-  window.VIVO = { ORGS, REFERRALS, CONNECTIONS, ROBERT, MEMBERS, FEED, LOG, STATUS, VIVO_STATUS, palette };
+  window.VIVO = { ORGS, REFERRALS, CONNECTIONS, ATTENDANCE, FEED, LOG, STATUS, VIVO_STATUS, palette };
 
   // ---- Helpers shared across screens ----
   window.VH = {
