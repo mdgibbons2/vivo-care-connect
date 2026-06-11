@@ -227,6 +227,7 @@
           React.createElement(Button, { variant: 'outline-secondary', icon: 'ri-flag-line', onClick: () => nav('closeout', { id: r.id }) }, 'Close out'),
           React.createElement(Button, { variant: 'primary', icon: 'ri-send-plane-line', onClick: () => nav('submit-report', { id: r.id }) }, 'Submit progress report'),
         ),
+        r.status === 'completed' && React.createElement(Button, { variant: 'primary', icon: 'ri-send-plane-line', onClick: () => nav('submit-report', { id: r.id }) }, 'Submit progress report'),
       ),
 
       // 3-column body

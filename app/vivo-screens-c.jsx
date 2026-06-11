@@ -29,7 +29,12 @@
     const r = VH.byId(params.id) || VH.byId('R-1039');
     const sessions = V.ATTENDANCE[r.id] || [];
     const periodOptions = Object.keys(PERIODS);
-    const [period, setPeriod] = useState(periodOptions[0]);
+    // Default to the most recent week that actually contains logged sessions
+    const defaultPeriod = periodOptions.find(p => sessions.some(s => {
+      const d = sessionISO(s.date);
+      return d && d.slice(0, 10) >= PERIODS[p].start && d.slice(0, 10) <= PERIODS[p].end;
+    })) || periodOptions[0];
+    const [period, setPeriod] = useState(defaultPeriod);
     const [statusText, setStatusText] = useState('Completed week 4 of program, attendance excellent.');
     const [note, setNote] = useState('');
     const [included, setIncluded] = useState(sessions.map(() => true));
