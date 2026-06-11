@@ -24,10 +24,18 @@ Vivo acting as a **Light Service Provider** (per the PA IG):
 
 All patient data is fictional sample data.
 
-## Running it
+## Running it locally
 
-It is a static page - no build step. Open `index.html` in a browser, or serve the folder with any
-static file server. React, ReactDOM, Babel standalone, and Remix Icon load from public CDNs.
+It is a static page - no build step - but it must be served over HTTP (Babel standalone fetches the
+JSX files via XHR, which browsers block on `file://` URLs). From the repo folder:
+
+```
+python3 -m http.server 8080
+```
+
+then open http://localhost:8080/. Any other static server (`npx serve`, VS Code Live Server) works
+too. An internet connection is required: React, ReactDOM, Babel standalone, and Remix Icon load
+from public CDNs.
 
 ## Notes
 
