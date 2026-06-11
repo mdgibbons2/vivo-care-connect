@@ -127,7 +127,13 @@
       },
         React.createElement('p', { className: 'muted-sm', style: { margin: '0 0 10px' } },
           `POST ${reported.length} session Observation${reported.length === 1 ? '' : 's'} + 3 weekly EVS Observations, PUT Task/${taskId} - delivered to ${r.provider.system} as one transaction.`),
-        React.createElement('div', { className: 'codeblock', dangerouslySetInnerHTML: { __html: VH.jsonHtml(bundle) } }),
+        React.createElement('div', { className: 'code-wrap' },
+          React.createElement('button', {
+            className: 'copy-json-btn', title: 'Copy JSON',
+            onClick: () => VH.copyText(JSON.stringify(bundle, null, 2), () => window.showToast('FHIR JSON copied to clipboard.')),
+          }, React.createElement('i', { className: 'ri-file-copy-line' })),
+          React.createElement('div', { className: 'codeblock', dangerouslySetInnerHTML: { __html: VH.jsonHtml(bundle) } }),
+        ),
       ),
     );
   }

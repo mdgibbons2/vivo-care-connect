@@ -353,6 +353,24 @@
         entry: [...sessionEntries, daysEntry, strengthEntry, minEntry, { resource: task, request: { method: 'PUT', url: 'Task/' + taskId } }],
       };
     },
+    // Copy text to the clipboard (with execCommand fallback), then call onDone
+    copyText: (txt, onDone) => {
+      const done = onDone || (() => {});
+      const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        done();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done, fallback);
+      } else fallback();
+    },
     // Pretty-print a JS object as syntax-highlighted JSON HTML
     jsonHtml: (obj) => {
       const json = JSON.stringify(obj, null, 2);
