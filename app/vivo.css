@@ -1,0 +1,304 @@
+/* ============================================================
+   Vivo Care Connect — domain layer
+   Built ON TOP of the Demo App Design System tokens.
+   Only adds what the FHIR referral domain needs; never
+   re-defines colors/type already in the system.
+   ============================================================ */
+
+:root {
+  /* Vivo brand — used ONLY for the logo, status dots, and
+     small accents. Primary CTAs stay the system slate. */
+  --vivo-blue:   #2480c0;
+  --vivo-blue-2: #2a6cb0;
+  --vivo-teal:   #57b0c4;
+  --vivo-green:  #1aa35a;
+  --vivo-orange: #f5a623;
+}
+
+/* ----- Sidebar brand: real Vivo wordmark ------------------- */
+.vivo-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vivo-brand img { height: 26px; width: auto; display: block; }
+.vivo-brand .vivo-brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--app-text-tertiary);
+  padding-left: 11px;
+  margin-top: 3px;
+  border-left: 2px solid var(--app-border);
+  line-height: 1.1;
+}
+
+/* Active nav link — background highlight only (no accent marker) */
+
+/* Remove the global top-bar search */
+.app-topbar .topbar-search { display: none; }
+/* Push the user menu to the right now that search is gone */
+.app-topbar > div:last-child { margin-left: auto; }
+
+/* Toasts: solid (opaque) surfaces instead of the 8% tint */
+.toast { background: #fff !important; box-shadow: var(--app-shadow-lg); border: 1px solid var(--app-border); }
+.toast.toast-success { background: #f0faf3 !important; border-color: rgba(26,163,90,0.25); }
+.toast.toast-danger  { background: #fdf1f1 !important; border-color: rgba(165,1,4,0.2); }
+.toast.toast-info    { background: #eff5fb !important; border-color: rgba(36,128,192,0.25); }
+.toast.toast-warning { background: #fdf6ea !important; border-color: rgba(245,166,35,0.3); }
+
+/* ----- Status badges: 6 distinct, muted to match system ---- */
+.vbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: var(--app-radius-sm);
+  white-space: nowrap;
+}
+.vbadge::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.vbadge.plain::before { display: none; }
+.vbadge.new        { background: #e7f1fb; color: #1c5d96; }
+.vbadge.accepted   { background: #e3f3f6; color: #1c7384; }
+.vbadge.inprogress { background: #fbf0dd; color: #97600a; }
+.vbadge.onhold     { background: #eef1f5; color: #5b6678; }
+.vbadge.completed  { background: #e6f4ec; color: #2f7345; }
+.vbadge.rejected   { background: #fbeaea; color: #a3322f; }
+.vbadge.trial      { background: #f0ecf8; color: #6a4ba0; }
+.vbadge.active     { background: #e6f4ec; color: #2f7345; }
+.vbadge.atrisk     { background: #fbeaea; color: #a3322f; }
+.vbadge.cancelled  { background: #eef1f5; color: #5b6678; }
+
+/* ----- Status dots (connection health) --------------------- */
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot.green { background: var(--vivo-green); box-shadow: 0 0 0 3px rgba(26,163,90,0.15); }
+.dot.amber { background: var(--vivo-orange); box-shadow: 0 0 0 3px rgba(245,166,35,0.15); }
+.dot.red   { background: var(--theme-danger); box-shadow: 0 0 0 3px rgba(165,1,4,0.12); }
+
+/* ----- Generic layout helpers ------------------------------ */
+.v-grid { display: grid; gap: 16px; }
+.v-row  { display: flex; align-items: center; }
+.v-stack { display: flex; flex-direction: column; }
+.muted-sm { font-size: 12px; color: var(--app-text-tertiary); }
+
+/* Definition list used in patient / referral panels */
+.deflist { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.deflist .field-label { margin-bottom: 2px; }
+.deflist .dval { font-size: 14px; color: var(--app-text-primary); }
+.deflist .dval.strong { font-weight: 600; }
+
+/* ----- KPI metric card: clickable affordance --------------- */
+.metric-card.kpi { cursor: pointer; }
+.metric-card.kpi:hover { border-color: var(--app-border-dark); box-shadow: var(--app-shadow-md); }
+.metric-card .kpi-top { display: flex; align-items: center; justify-content: space-between; }
+.metric-card .kpi-icon {
+  width: 34px; height: 34px; border-radius: var(--app-radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+/* ----- Filter chips ---------------------------------------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font-size: 12.5px; font-weight: 500;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--app-border);
+  background: #fff; color: var(--app-text-secondary);
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.chip:hover { background: var(--app-bg-secondary); }
+.chip.active {
+  background: var(--app-text-primary); color: #fff; border-color: var(--app-text-primary);
+}
+.chip .count { opacity: 0.65; font-variant-numeric: tabular-nums; }
+
+/* ----- Horizontal status timeline -------------------------- */
+.timeline { display: flex; align-items: flex-start; width: 100%; }
+.timeline .tstep { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; text-align: center; }
+.timeline .tstep .tnode {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 2px solid var(--app-border-dark);
+  color: var(--app-text-muted); font-size: 14px; z-index: 1;
+}
+.timeline .tstep .tlabel { font-size: 12px; margin-top: 8px; color: var(--app-text-tertiary); font-weight: 500; }
+.timeline .tstep .tdate  { font-size: 11px; color: var(--app-text-muted); margin-top: 2px; }
+.timeline .tstep::before, .timeline .tstep::after {
+  content: ""; position: absolute; top: 13px; height: 2px; background: var(--app-border);
+}
+.timeline .tstep::before { left: 0; width: 50%; }
+.timeline .tstep::after  { right: 0; width: 50%; }
+.timeline .tstep:first-child::before { display: none; }
+.timeline .tstep:last-child::after  { display: none; }
+.timeline .tstep.done .tnode    { background: var(--vivo-green); border-color: var(--vivo-green); color: #fff; }
+.timeline .tstep.current .tnode { background: var(--vivo-blue); border-color: var(--vivo-blue); color: #fff; box-shadow: 0 0 0 4px rgba(36,128,192,0.15); }
+.timeline .tstep.current .tlabel { color: var(--app-text-primary); font-weight: 600; }
+.timeline .tstep.done::before, .timeline .tstep.done::after,
+.timeline .tstep.current::before { background: var(--vivo-green); }
+
+/* ----- Wizard stepper -------------------------------------- */
+.stepper { display: flex; align-items: center; gap: 0; }
+.stepper .wstep { display: flex; align-items: center; gap: 10px; }
+.stepper .wnum {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+  background: #fff; border: 2px solid var(--app-border-dark); color: var(--app-text-tertiary);
+}
+.stepper .wstep .wtitle { font-size: 13.5px; font-weight: 600; color: var(--app-text-tertiary); }
+.stepper .wstep.done .wnum    { background: var(--vivo-green); border-color: var(--vivo-green); color: #fff; }
+.stepper .wstep.active .wnum  { background: var(--app-text-primary); border-color: var(--app-text-primary); color: #fff; }
+.stepper .wstep.active .wtitle, .stepper .wstep.done .wtitle { color: var(--app-text-primary); }
+.stepper .wline { flex: 1; height: 2px; background: var(--app-border); margin: 0 16px; min-width: 32px; }
+.stepper .wline.done { background: var(--vivo-green); }
+
+/* ----- Selectable option cards (plan / level / sync) ------- */
+.opt-grid { display: grid; gap: 12px; }
+.opt-card {
+  border: 1.5px solid var(--app-border); border-radius: var(--app-radius);
+  padding: 16px; cursor: pointer; background: #fff; position: relative;
+  transition: var(--app-transition);
+}
+.opt-card:hover { border-color: var(--app-border-dark); }
+.opt-card.selected { border-color: var(--vivo-blue); background: rgba(36,128,192,0.04); }
+.opt-card.selected::after {
+  content: "\ea5e"; font-family: "remixicon";
+  position: absolute; top: 12px; right: 12px;
+  color: var(--vivo-blue); font-size: 18px;
+}
+.opt-card .opt-title { font-weight: 600; font-size: 14.5px; }
+.opt-card .opt-desc  { font-size: 12.5px; color: var(--app-text-tertiary); margin-top: 4px; line-height: 1.4; }
+.opt-card .opt-big   { font-size: 26px; font-weight: 700; line-height: 1; }
+
+/* Checkbox rows */
+.check-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; }
+.check-row + .check-row { border-top: 1px solid var(--app-border-light); }
+.check-row input[type=checkbox] { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--vivo-blue); cursor: pointer; }
+.check-row label { cursor: pointer; }
+
+/* ----- Message thread -------------------------------------- */
+.thread { display: flex; flex-direction: column; gap: 14px; }
+.msg { display: flex; gap: 10px; }
+.msg .mbubble {
+  background: var(--app-bg-secondary); border: 1px solid var(--app-border-light);
+  border-radius: 10px; padding: 10px 13px; font-size: 13px; line-height: 1.5; flex: 1;
+}
+.msg .mmeta { font-size: 11px; color: var(--app-text-tertiary); margin-top: 5px; }
+.msg.me .mbubble { background: rgba(36,128,192,0.07); border-color: rgba(36,128,192,0.2); }
+
+/* ----- Progress bars --------------------------------------- */
+.pbar { height: 8px; border-radius: 999px; background: var(--app-bg-tertiary); overflow: hidden; }
+.pbar > span { display: block; height: 100%; border-radius: 999px; background: var(--vivo-green); }
+.pbar.blue > span { background: var(--vivo-blue); }
+
+/* ----- Stat tiles (small) ---------------------------------- */
+.stat-tiles { display: grid; gap: 12px; }
+.stat-tile {
+  border: 1px solid var(--app-border); border-radius: var(--app-radius);
+  padding: 14px 16px; background: #fff;
+}
+.stat-tile .st-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: var(--app-text-tertiary); }
+.stat-tile .st-value { font-size: 22px; font-weight: 700; margin-top: 4px; line-height: 1; }
+.stat-tile .st-sub { font-size: 12px; color: var(--app-text-tertiary); margin-top: 4px; }
+
+/* ----- JSON / code block (FHIR) ---------------------------- */
+.codeblock {
+  background: #0f172a; color: #e2e8f0;
+  border-radius: var(--app-radius); padding: 16px 18px;
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6;
+  overflow: auto; white-space: pre; max-height: 360px;
+}
+.codeblock .k { color: #7dd3fc; }   /* keys */
+.codeblock .s { color: #86efac; }   /* strings */
+.codeblock .n { color: #fbbf24; }   /* numbers */
+.codeblock .p { color: #94a3b8; }   /* punctuation */
+
+/* ----- FHIR activity log ----------------------------------- */
+.dir-pill {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 2px 7px; border-radius: var(--app-radius-sm); text-transform: uppercase;
+}
+.dir-pill.in  { background: #e7f1fb; color: #1c5d96; }
+.dir-pill.out { background: #f0ecf8; color: #6a4ba0; }
+.method {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  padding: 2px 6px; border-radius: var(--app-radius-sm);
+}
+.method.GET  { background: #e6f4ec; color: #2f7345; }
+.method.POST { background: #e7f1fb; color: #1c5d96; }
+.method.PUT  { background: #fbf0dd; color: #97600a; }
+.path-mono { font-family: var(--font-mono); font-size: 12px; color: var(--app-text-secondary); }
+.status-code { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+.status-code.ok   { color: var(--vivo-green); }
+.status-code.warn { color: var(--theme-warning); }
+.status-code.err  { color: var(--theme-danger); }
+.log-row { cursor: pointer; }
+.log-detail td { background: var(--app-bg-secondary) !important; padding: 0 !important; }
+.log-detail .inner { padding: 14px 16px; }
+
+/* ----- Misc ------------------------------------------------ */
+.sync-ind { font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+.sync-ind.sent    { color: var(--vivo-green); }
+.sync-ind.pending { color: var(--theme-warning); }
+.section-divider { border: none; border-top: 1px solid var(--app-border-light); margin: 20px 0; }
+.callout {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.3);
+  border-radius: var(--app-radius); padding: 12px 14px; font-size: 13px;
+}
+.callout i { color: var(--theme-warning); font-size: 17px; margin-top: 1px; }
+.callout.info { background: rgba(36,128,192,0.07); border-color: rgba(36,128,192,0.25); }
+.callout.info i { color: var(--vivo-blue); }
+.row-warning { background: rgba(245,166,35,0.06) !important; }
+.row-warning:hover { background: rgba(245,166,35,0.1) !important; }
+
+/* Avatar helper inline */
+.av {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 600; font-size: 13px;
+}
+
+/* Patient name cell */
+.pcell { display: flex; align-items: center; gap: 10px; }
+.pcell .pname { font-weight: 600; font-size: 13.5px; line-height: 1.2; }
+.pcell .psub { font-size: 12px; color: var(--app-text-tertiary); }
+
+/* Back link */
+.back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--app-text-tertiary); cursor: pointer; margin-bottom: 10px; }
+.back-link:hover { color: var(--app-text-primary); }
+
+/* Detail header */
+.detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.detail-head .dh-left { display: flex; align-items: center; gap: 14px; }
+.detail-head h1 { margin: 0; }
+
+/* Three column responsive */
+.cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cols-2-wide { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+@media (max-width: 1100px) { .cols-3 { grid-template-columns: 1fr; } .cols-2, .cols-2-wide { grid-template-columns: 1fr; } }
+
+/* Goal list */
+.goal-list { list-style: none; margin: 0; padding: 0; }
+.goal-list li { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; font-size: 13.5px; }
+.goal-list li i { color: var(--vivo-green); margin-top: 2px; }
+
+/* Attendance log rows */
+.log-list { display: flex; flex-direction: column; }
+.log-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--app-border-light); }
+.log-item:last-child { border-bottom: none; }
+
+/* small toolbar buttons in table */
+.tb-actions { display: flex; gap: 8px; align-items: center; }

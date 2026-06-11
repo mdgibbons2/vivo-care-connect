@@ -1,0 +1,68 @@
+/* Preview card shell — used by every Design System tab card.
+   Keep it minimal: just the tokens + a centered, padded body.
+   The asset's name is rendered OUTSIDE the card by the host, so
+   we add no titles or framing here. */
+
+@import url("https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css");
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "system-ui", "Segoe UI",
+               Roboto, Helvetica, Arial, sans-serif;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card-shell {
+  padding: 20px 24px;
+  min-height: 100%;
+}
+
+/* tokens (subset, mirrored from colors_and_type.css so each card
+   is self-contained when rendered in an isolated iframe) */
+:root {
+  --app-text-primary: #0f172a;
+  --app-text-secondary: #475569;
+  --app-text-tertiary: #64748b;
+  --app-text-muted: #94a3b8;
+  --app-bg-primary: #ffffff;
+  --app-bg-secondary: #f8fafc;
+  --app-bg-tertiary: #f1f5f9;
+  --app-border: #e2e8f0;
+  --app-border-light: #f1f5f9;
+  --app-accent: #475569;
+  --app-accent-hover: #334155;
+  --app-success: #00d924;
+  --app-warning: #ffb020;
+  --app-error: #df1b41;
+  --theme-primary: #475569;
+  --theme-primary-hover: #334155;
+  --theme-primary-rgb: 71, 85, 105;
+  --theme-secondary: #1f2937;
+  --theme-secondary-rgb: 31, 41, 55;
+  --theme-success: #5DB577;
+  --theme-success-rgb: 93, 181, 119;
+  --theme-info: #336699;
+  --theme-info-rgb: 51, 102, 153;
+  --theme-warning: #E38F07;
+  --theme-warning-rgb: 227, 143, 7;
+  --theme-danger: #A50104;
+  --theme-danger-rgb: 165, 1, 4;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--app-text-tertiary);
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+}
