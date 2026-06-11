@@ -31,6 +31,7 @@
     const [statusText, setStatusText] = useState('Completed week 4 of program, attendance excellent.');
     const [note, setNote] = useState('');
     const [included, setIncluded] = useState(sessions.map(() => true));
+    const [payloadOpen, setPayloadOpen] = useState(false);
 
     // Live measures: only included sessions inside the selected period count
     const range = PERIODS[period];
@@ -109,11 +110,24 @@
             ),
           ),
           React.createElement(Card, { title: 'FHIR payload' },
-            React.createElement('p', { className: 'muted-sm', style: { margin: '0 0 6px' } },
+            React.createElement('p', { className: 'muted-sm', style: { margin: '0 0 10px' } },
               `One transaction: POST ${reported.length} session Observation${reported.length === 1 ? '' : 's'} + 3 weekly EVS Observations, PUT Task/${taskId}.`),
-            React.createElement(JsonBlock, { obj: bundle, label: `Preview FHIR JSON (transaction Bundle · ${bundle.entry.length} entries)` }),
+            React.createElement(Button, { variant: 'outline-secondary', icon: 'ri-code-s-slash-line', onClick: () => setPayloadOpen(true) },
+              `View FHIR JSON (${bundle.entry.length} entries)`),
           ),
         ),
+      ),
+
+      // FHIR payload modal
+      React.createElement(Modal, {
+        open: payloadOpen, icon: 'ri-code-s-slash-line',
+        title: `FHIR payload · transaction Bundle (${bundle.entry.length} entries)`,
+        onClose: () => setPayloadOpen(false),
+        footer: React.createElement(Button, { variant: 'primary', onClick: () => setPayloadOpen(false) }, 'Close'),
+      },
+        React.createElement('p', { className: 'muted-sm', style: { margin: '0 0 10px' } },
+          `POST ${reported.length} session Observation${reported.length === 1 ? '' : 's'} + 3 weekly EVS Observations, PUT Task/${taskId} - delivered to ${r.provider.system} as one transaction.`),
+        React.createElement('div', { className: 'codeblock', dangerouslySetInnerHTML: { __html: VH.jsonHtml(bundle) } }),
       ),
     );
   }
