@@ -9,22 +9,116 @@
   // ------------------------------------------------------------
   // 7. SUBMIT PROGRESS REPORT
   // ------------------------------------------------------------
+  // Weekly reporting periods (the IG's EVS rollups are per-week measures)
+  const PERIODS = {
+    'Jun 1 – Jun 7, 2026': { start: '2026-06-01', end: '2026-06-07' },
+    'May 25 – May 31, 2026': { start: '2026-05-25', end: '2026-05-31' },
+    'May 18 – May 24, 2026': { start: '2026-05-18', end: '2026-05-24' },
+  };
+  const MONTHS = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+  // 'Jun 9, 2026 10:00 AM ET' -> '2026-06-09T10:00:00-04:00'
+  function sessionISO(dateStr) {
+    const m = dateStr.match(/^(\w+) (\d+), (\d+) (\d+):(\d+) (AM|PM) ET$/);
+    if (!m) return null;
+    let h = parseInt(m[4], 10) % 12;
+    if (m[6] === 'PM') h += 12;
+    return `${m[3]}-${MONTHS[m[1]]}-${String(m[2]).padStart(2, '0')}T${String(h).padStart(2, '0')}:${m[5]}:00-04:00`;
+  }
+
   function SubmitReport({ nav, params }) {
     const r = VH.byId(params.id) || VH.byId('R-1039');
     const sessions = V.ATTENDANCE[r.id] || [];
-    const [period, setPeriod] = useState('Jun 1 – Jun 7, 2026');
+    const periodOptions = Object.keys(PERIODS);
+    const [period, setPeriod] = useState(periodOptions[0]);
     const [statusText, setStatusText] = useState('Completed week 4 of program, attendance excellent.');
     const [note, setNote] = useState('');
     const [included, setIncluded] = useState(sessions.map(() => true));
-    const fhir = {
-      resourceType: 'Observation', status: 'final',
-      category: [{ coding: [{ code: 'activity' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '89555-7', display: 'Exercise vital sign' }] },
-      subject: { display: r.name }, effectivePeriod: { start: '2026-06-01', end: '2026-06-07' },
-      component: [
-        { code: { text: 'Days/week moderate-vigorous' }, valueQuantity: { value: 3, unit: 'days' } },
-        { code: { text: 'Minutes/week' }, valueQuantity: { value: 135, unit: 'min' } },
-        { code: { text: 'Strength days/week' }, valueQuantity: { value: 2, unit: 'days' } },
+
+    // Live measures: only included sessions inside the selected period count
+    const range = PERIODS[period];
+    const inPeriod = (s) => { const d = sessionISO(s.date); return d && d.slice(0, 10) >= range.start && d.slice(0, 10) <= range.end; };
+    const reported = sessions.filter((s, i) => included[i] && inPeriod(s));
+    const days = new Set(reported.map(s => sessionISO(s.date).slice(0, 10))).size;
+    const minutes = reported.reduce((sum, s) => sum + s.dur, 0);
+    const strengthDays = days; // every Vivo class type is strength training
+
+    // FHIR per the PA IG: per-session activity measures + per-week EVS rollups
+    // (separate Observation resources, both required categories, min/week derived
+    // from the sessions) + the shared Task carrying businessStatus and notes.
+    const IG = 'http://hl7.org/fhir/us/physical-activity/';
+    const LOINC = 'http://loinc.org';
+    const UCUM = 'http://unitsofmeasure.org';
+    const CATEGORIES = [
+      { coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'activity', display: 'Activity' }] },
+      { coding: [{ system: IG + 'CodeSystem/pa-temporary-codes', code: 'PhysicalActivity', display: 'Physical Activity' }] },
+    ];
+    const profile = (p) => ({ profile: [IG + 'StructureDefinition/' + p] });
+    const ORG = { reference: 'Organization/vivo', display: 'Vivo Health, Inc.' };
+    const num = r.order.replace('ORD-', '');
+    const taskId = 'task-' + num;
+    const subject = { reference: 'Patient/pat-' + r.id.replace('R-', ''), display: r.name };
+    const uuid = (n) => 'urn:uuid:00000000-0000-4000-8000-' + String(n).padStart(12, '0');
+
+    const sessionEntries = reported.map((s, i) => ({
+      fullUrl: uuid(i + 1),
+      resource: {
+        resourceType: 'Observation',
+        meta: profile('pa-observation-activity-measure'),
+        status: 'final',
+        category: CATEGORIES,
+        code: { coding: [{ system: LOINC, code: '55411-3' }], text: 'Exercise duration' },
+        subject,
+        effectiveDateTime: sessionISO(s.date),
+        performer: [ORG],
+        valueQuantity: { value: s.dur, unit: 'min', system: UCUM, code: 'min' },
+        note: [{ text: s.cls + ' class with trainer ' + s.trainer }],
+      },
+      request: { method: 'POST', url: 'Observation' },
+    }));
+    const evs = (n, prof, code, text, value, unit) => ({
+      fullUrl: uuid(n),
+      resource: {
+        resourceType: 'Observation',
+        meta: profile(prof),
+        status: 'final',
+        category: CATEGORIES,
+        code: { coding: [{ system: LOINC, code }], text },
+        subject,
+        effectivePeriod: { start: range.start, end: range.end },
+        performer: [ORG],
+        valueQuantity: { value, unit, system: UCUM, code: unit },
+      },
+      request: { method: 'POST', url: 'Observation' },
+    });
+    const daysEntry = evs(101, 'pa-observation-evs-days-per-week', '89555-7', 'Days per week of moderate to strenuous exercise', days, 'd/wk');
+    const strengthEntry = evs(102, 'pa-observation-strength-days-per-week', '82291-6', 'Days per week of muscle-strengthening exercise', strengthDays, 'd/wk');
+    const minEntry = evs(103, 'pa-observation-evs-min-per-week', '82290-8', 'Minutes per week of moderate to vigorous physical activity', minutes, 'min/wk');
+    minEntry.resource.derivedFrom = sessionEntries.map(e => ({ reference: e.fullUrl }));
+
+    const task = {
+      resourceType: 'Task',
+      id: taskId,
+      meta: profile('pa-task-for-referral-management'),
+      status: 'in-progress',
+      intent: 'order',
+      code: { coding: [{ system: 'http://hl7.org/fhir/CodeSystem/task-code', code: 'fulfill' }] },
+      focus: { reference: 'ServiceRequest/sr-' + num },
+      for: subject,
+      requester: { reference: 'PractitionerRole/dr-' + r.provider.practitioner.split(' ').pop().toLowerCase(), display: r.provider.practitioner },
+      owner: ORG,
+      businessStatus: { text: statusText },
+    };
+    if (note.trim()) task.note = [{ authorReference: ORG, time: new Date().toISOString().slice(0, 19) + 'Z', text: note.trim() }];
+
+    const bundle = {
+      resourceType: 'Bundle',
+      type: 'transaction',
+      entry: [
+        ...sessionEntries,
+        daysEntry,
+        strengthEntry,
+        minEntry,
+        { resource: task, request: { method: 'PUT', url: 'Task/' + taskId } },
       ],
     };
     const send = () => { window.showToast(`Progress report sent to ${r.provider.org}.`); nav('referral-detail', { id: r.id }); };
@@ -40,16 +134,16 @@
         React.createElement('div', { className: 'v-grid' },
           React.createElement(Card, { title: 'Reporting period' },
             React.createElement(Select, { placeholder: 'Select period', value: period, onChange: e => setPeriod(e.target.value),
-              options: ['Jun 1 – Jun 7, 2026', 'May 25 – May 31, 2026', 'May 18 – May 24, 2026', 'Full program to date'] }),
+              options: periodOptions }),
           ),
           React.createElement(Card, { title: 'Exercise vital sign (auto-calculated)' },
             React.createElement('div', { className: 'callout info', style: { marginBottom: 16 } },
               React.createElement('i', { className: 'ri-calculator-line' }),
-              React.createElement('div', null, 'Computed from logged class sessions. Read-only.')),
+              React.createElement('div', null, 'Computed live from the included sessions inside the reporting period. Read-only.')),
             React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 } },
-              React.createElement(RO, { label: 'Days/week moderate', value: '3' }),
-              React.createElement(RO, { label: 'Minutes/week', value: '135' }),
-              React.createElement(RO, { label: 'Strength days/week', value: '2' }),
+              React.createElement(RO, { label: 'Days/week moderate', value: String(days) }),
+              React.createElement(RO, { label: 'Minutes/week', value: String(minutes) }),
+              React.createElement(RO, { label: 'Strength days/week', value: String(strengthDays) }),
             ),
           ),
           React.createElement(Card, { title: 'Status update' },
@@ -59,24 +153,26 @@
             React.createElement('textarea', { className: 'form-control', rows: 2, placeholder: 'Add a personal note…', value: note, onChange: e => setNote(e.target.value), style: { resize: 'vertical' } }),
           ),
           React.createElement(Card, { title: 'FHIR payload' },
-            React.createElement(JsonBlock, { obj: fhir, label: 'Preview FHIR JSON (Observation)' }),
+            React.createElement('p', { className: 'muted-sm', style: { margin: '0 0 6px' } },
+              `One transaction: POST ${sessionEntries.length} session Observation${sessionEntries.length === 1 ? '' : 's'} + 3 weekly EVS Observations, PUT Task/${taskId}.`),
+            React.createElement(JsonBlock, { obj: bundle, label: `Preview FHIR JSON (transaction Bundle · ${bundle.entry.length} entries)` }),
           ),
         ),
 
         React.createElement('div', { className: 'v-grid' },
-          React.createElement(Card, { title: `Included sessions (${included.filter(Boolean).length})` },
+          React.createElement(Card, { title: `Included sessions (${reported.length} in period)` },
             React.createElement('div', null,
-              sessions.map((a, i) => React.createElement('div', { key: i, className: 'check-row', style: { alignItems: 'center' } },
+              sessions.map((a, i) => React.createElement('div', { key: i, className: 'check-row', style: { alignItems: 'center', opacity: inPeriod(a) ? 1 : 0.55 } },
                 React.createElement('input', { type: 'checkbox', id: 'inc-' + i, checked: included[i], onChange: () => setIncluded(s => s.map((v, j) => j === i ? !v : v)) }),
                 React.createElement('label', { htmlFor: 'inc-' + i, style: { flex: 1 } },
                   React.createElement('div', { style: { fontWeight: 600, fontSize: 13 } }, a.cls),
-                  React.createElement('div', { className: 'muted-sm' }, `${a.date} · ${a.dur} min`)),
+                  React.createElement('div', { className: 'muted-sm' }, `${a.date} · ${a.dur} min` + (inPeriod(a) ? '' : ' · outside period'))),
               )),
             ),
           ),
           React.createElement(Card, { title: 'Ready to send' },
             React.createElement('p', { style: { fontSize: 13, color: 'var(--app-text-secondary)' } },
-              'This report will be delivered to ', React.createElement('strong', null, r.provider.org), ' as a FHIR Observation tied to referral ', r.id, '.'),
+              'This report will be delivered to ', React.createElement('strong', null, r.provider.org), ' as one FHIR transaction Bundle: the session and weekly Observations above, plus the Task update carrying your status and message.'),
             React.createElement(Button, { variant: 'primary', icon: 'ri-send-plane-line', onClick: send, className: 'w-full', style: { width: '100%', justifyContent: 'center' } }, `Send to ${r.provider.org}`),
           ),
         ),

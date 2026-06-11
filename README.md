@@ -18,7 +18,10 @@ Vivo acting as a **Light Service Provider** (per the PA IG):
   decline flows, the attendance log with FHIR sync status, and the report actions
 - **Enroll member** - 3-step wizard converting a referral into a Vivo member (plan, exercise level,
   baseline assessment, HubSpot/Momence sync)
-- **Submit progress report** - auto-calculated Exercise Vital Sign measures with FHIR JSON preview
+- **Submit progress report** - Exercise Vital Sign measures computed live from the included class
+  sessions, with an honest FHIR preview: a PA IG-conformant transaction Bundle (per-session
+  activity-measure Observations, the three weekly EVS rollups with derivedFrom links, and the
+  Task update carrying businessStatus and notes) built from the form state in real time
 - **Close out referral** - final report with measures vs baseline
 - **Connections** - care manager FHIR endpoint management (SMART Backend Services)
 - **FHIR activity log** - request/response log with full FHIR payloads
