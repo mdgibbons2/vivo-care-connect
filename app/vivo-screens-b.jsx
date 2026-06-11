@@ -198,7 +198,6 @@
 
       React.createElement('div', { className: 'detail-head' },
         React.createElement('div', { className: 'dh-left' },
-          React.createElement(AV, { name: r.name, color: r.color, size: 52 }),
           React.createElement('div', null,
             React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } },
               React.createElement('h1', null, r.name),
