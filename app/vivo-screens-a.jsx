@@ -180,6 +180,8 @@
     const [declineOpen, setDeclineOpen] = useState(false);
     const [declineReason, setDeclineReason] = useState('');
     const [reason2, setReason2] = useState('');
+    const [repDetail, setRepDetail] = useState(null);
+    const reports = V.REPORTS[r.id] || [];
     const [messages, setMessages] = useState([
       { from: r.provider.practitioner, me: false, text: r.note.replace(/ —.*$/, ''), time: r.received },
     ]);
@@ -310,6 +312,61 @@
             ),
           ),
         ),
+      ),
+
+      // Submitted reports
+      reports.length > 0 && React.createElement('div', { style: { marginBottom: 16 } },
+        React.createElement(Card, { title: 'Submitted reports', padded: false },
+          React.createElement('table', { className: 'table' },
+            React.createElement('thead', null, React.createElement('tr', null,
+              ['Sent', 'Type', 'Reporting period', 'Measures', ''].map((h, i) =>
+                React.createElement('th', { key: i }, h)))),
+            React.createElement('tbody', null,
+              reports.map((rep, i) => React.createElement('tr', { key: i, className: 'clickable', onClick: () => setRepDetail(rep) },
+                React.createElement('td', { style: { fontSize: 13, fontWeight: 600 } }, rep.sent),
+                React.createElement('td', null, React.createElement('span', { className: 'vbadge plain ' + (rep.type === 'final' ? 'completed' : 'accepted') }, rep.type === 'final' ? 'Final' : 'Progress')),
+                React.createElement('td', { style: { fontSize: 13, color: 'var(--app-text-secondary)' } }, rep.period),
+                React.createElement('td', { style: { fontSize: 13, fontVariantNumeric: 'tabular-nums' } },
+                  (rep.type === 'final' ? 'avg ' : '') + `${rep.days} days · ${rep.minutes} min · ${rep.strengthDays} strength`),
+                React.createElement('td', { style: { textAlign: 'right' } }, React.createElement(Button, {
+                  size: 'sm', variant: 'outline-secondary', icon: 'ri-information-line',
+                  onClick: e => { e.stopPropagation(); setRepDetail(rep); } }, 'Details')),
+              )),
+            ),
+          ),
+        ),
+      ),
+
+      // Report detail modal (with the FHIR Bundle as sent)
+      React.createElement(Modal, {
+        open: !!repDetail, icon: 'ri-file-chart-line',
+        title: repDetail ? (repDetail.type === 'final' ? 'Final report' : 'Progress report') + ' · ' + repDetail.sent : '',
+        onClose: () => setRepDetail(null),
+        footer: React.createElement(Button, { variant: 'primary', onClick: () => setRepDetail(null) }, 'Close'),
+      },
+        repDetail && (() => {
+          const sess = (V.ATTENDANCE[r.id] || []).filter(s => {
+            const d = VH.sessionISO(s.date);
+            return d && d.slice(0, 10) >= repDetail.start && d.slice(0, 10) <= repDetail.end;
+          });
+          const sentBundle = VH.buildReportBundle(r, {
+            sessions: sess, start: repDetail.start, end: repDetail.end,
+            days: repDetail.days, minutes: repDetail.minutes, strengthDays: repDetail.strengthDays,
+            statusText: repDetail.statusText, note: repDetail.note,
+            taskStatus: repDetail.type === 'final' ? 'completed' : 'in-progress',
+          });
+          return React.createElement('div', null,
+            React.createElement('div', { className: 'deflist', style: { gap: 14, marginBottom: 16 } },
+              React.createElement(IField, { label: 'Reporting period', value: repDetail.period, strong: true }),
+              React.createElement('div', { style: { display: 'flex', gap: 32 } },
+                React.createElement(IField, { label: 'Sent', value: repDetail.sent }),
+                React.createElement(IField, { label: 'Delivered to', value: r.provider.system })),
+              React.createElement(IField, { label: 'Measures', value: (repDetail.type === 'final' ? 'avg ' : '') + `${repDetail.days} days/week · ${repDetail.minutes} min/week · ${repDetail.strengthDays} strength days/week` }),
+              React.createElement(IField, { label: 'Summary', value: repDetail.statusText }),
+            ),
+            React.createElement(JsonBlock, { obj: sentBundle, label: `FHIR JSON as sent (transaction Bundle · ${sentBundle.entry.length} entries)` }),
+          );
+        })(),
       ),
 
       // Status timeline

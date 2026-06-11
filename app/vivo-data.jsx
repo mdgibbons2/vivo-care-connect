@@ -186,6 +186,23 @@
     ],
   };
 
+  // ---- Submitted reports (keyed by referral id, newest first) ----
+  // For 'final' reports, days/minutes/strengthDays are weekly averages over the program.
+  const REPORTS = {
+    'R-1039': [
+      { type: 'progress', period: 'May 25 – May 31, 2026', start: '2026-05-25', end: '2026-05-31', sent: 'Jun 1, 2026', days: 2, minutes: 85, strengthDays: 2, statusText: 'Completed week 3, attendance strong.' },
+      { type: 'progress', period: 'May 18 – May 24, 2026', start: '2026-05-18', end: '2026-05-24', sent: 'May 25, 2026', days: 1, minutes: 40, strengthDays: 1, statusText: 'First full week after intake. Started gently per cardiology guidance.' },
+    ],
+    'R-1021': [
+      { type: 'final', period: 'Mar 9 – May 31, 2026', start: '2026-03-09', end: '2026-05-31', sent: 'Jun 2, 2026', days: 3, minutes: 142, strengthDays: 3, statusText: 'Program complete: 31 classes over 12 weeks, exceeding the weekly activity goal. Reports improved energy and blood sugar control.' },
+      { type: 'progress', period: 'May 25 – May 31, 2026', start: '2026-05-25', end: '2026-05-31', sent: 'Jun 1, 2026', days: 1, minutes: 45, strengthDays: 1, statusText: 'Final week of the program.' },
+      { type: 'progress', period: 'May 18 – May 24, 2026', start: '2026-05-18', end: '2026-05-24', sent: 'May 25, 2026', days: 2, minutes: 90, strengthDays: 2, statusText: 'Week 11: consistent attendance, full participation.' },
+    ],
+    'R-1009': [
+      { type: 'final', period: 'Feb 23 – May 22, 2026', start: '2026-02-23', end: '2026-05-22', sent: 'May 26, 2026', days: 2, minutes: 90, strengthDays: 2, statusText: 'Graduated program. Notable balance improvement; reduced fall-risk score.' },
+    ],
+  };
+
   // ---- Recent activity feed (dashboard) ----
   const FEED = [
     { icon: 'ri-inbox-archive-line', text: '<strong>New referral received</strong> for Margaret Chen from Piedmont Primary Care', time: '10 min ago', tone: 'blue' },
@@ -235,7 +252,7 @@
     cancelled: { label: 'Cancelled', cls: 'cancelled' },
   };
 
-  window.VIVO = { ORGS, REFERRALS, CONNECTIONS, ATTENDANCE, FEED, LOG, STATUS, VIVO_STATUS, palette };
+  window.VIVO = { ORGS, REFERRALS, CONNECTIONS, ATTENDANCE, REPORTS, FEED, LOG, STATUS, VIVO_STATUS, palette };
 
   // ---- Helpers shared across screens ----
   window.VH = {
@@ -254,6 +271,87 @@
     vivoBadge: (status) => {
       const s = VIVO_STATUS[status]; if (!s) return null;
       return React.createElement('span', { className: 'vbadge ' + s.cls }, s.label);
+    },
+    // 'Jun 9, 2026 10:00 AM ET' -> '2026-06-09T10:00:00-04:00'
+    sessionISO: (dateStr) => {
+      const M = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+      const m = String(dateStr).match(/^(\w+) (\d+), (\d+) (\d+):(\d+) (AM|PM) ET$/);
+      if (!m) return null;
+      let h = parseInt(m[4], 10) % 12;
+      if (m[6] === 'PM') h += 12;
+      return `${m[3]}-${M[m[1]]}-${String(m[2]).padStart(2, '0')}T${String(h).padStart(2, '0')}:${m[5]}:00-04:00`;
+    },
+    // Build the PA IG transaction Bundle for a progress/final report:
+    // one activity-measure Observation per session, the three weekly EVS
+    // rollups (min/week derived from the sessions), and the Task update.
+    buildReportBundle: (r, o) => {
+      const IG = 'http://hl7.org/fhir/us/physical-activity/';
+      const LOINC = 'http://loinc.org';
+      const UCUM = 'http://unitsofmeasure.org';
+      const CATEGORIES = [
+        { coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'activity', display: 'Activity' }] },
+        { coding: [{ system: IG + 'CodeSystem/pa-temporary-codes', code: 'PhysicalActivity', display: 'Physical Activity' }] },
+      ];
+      const profile = (p) => ({ profile: [IG + 'StructureDefinition/' + p] });
+      const ORG = { reference: 'Organization/vivo', display: 'Vivo Health, Inc.' };
+      const num = r.order.replace('ORD-', '');
+      const taskId = 'task-' + num;
+      const subject = { reference: 'Patient/pat-' + r.id.replace('R-', ''), display: r.name };
+      const uuid = (n) => 'urn:uuid:00000000-0000-4000-8000-' + String(n).padStart(12, '0');
+      const sessionEntries = (o.sessions || []).map((s, i) => ({
+        fullUrl: uuid(i + 1),
+        resource: {
+          resourceType: 'Observation',
+          meta: profile('pa-observation-activity-measure'),
+          status: 'final',
+          category: CATEGORIES,
+          code: { coding: [{ system: LOINC, code: '55411-3' }], text: 'Exercise duration' },
+          subject,
+          effectiveDateTime: window.VH.sessionISO(s.date),
+          performer: [ORG],
+          valueQuantity: { value: s.dur, unit: 'min', system: UCUM, code: 'min' },
+          note: [{ text: s.cls + ' class with trainer ' + s.trainer }],
+        },
+        request: { method: 'POST', url: 'Observation' },
+      }));
+      const evs = (n, prof, code, text, value, unit) => ({
+        fullUrl: uuid(n),
+        resource: {
+          resourceType: 'Observation',
+          meta: profile(prof),
+          status: 'final',
+          category: CATEGORIES,
+          code: { coding: [{ system: LOINC, code }], text },
+          subject,
+          effectivePeriod: { start: o.start, end: o.end },
+          performer: [ORG],
+          valueQuantity: { value, unit, system: UCUM, code: unit },
+        },
+        request: { method: 'POST', url: 'Observation' },
+      });
+      const daysEntry = evs(101, 'pa-observation-evs-days-per-week', '89555-7', 'Days per week of moderate to strenuous exercise', o.days, 'd/wk');
+      const strengthEntry = evs(102, 'pa-observation-strength-days-per-week', '82291-6', 'Days per week of muscle-strengthening exercise', o.strengthDays, 'd/wk');
+      const minEntry = evs(103, 'pa-observation-evs-min-per-week', '82290-8', 'Minutes per week of moderate to vigorous physical activity', o.minutes, 'min/wk');
+      minEntry.resource.derivedFrom = sessionEntries.map(e => ({ reference: e.fullUrl }));
+      const task = {
+        resourceType: 'Task',
+        id: taskId,
+        meta: profile('pa-task-for-referral-management'),
+        status: o.taskStatus || 'in-progress',
+        intent: 'order',
+        code: { coding: [{ system: 'http://hl7.org/fhir/CodeSystem/task-code', code: 'fulfill' }] },
+        focus: { reference: 'ServiceRequest/sr-' + num },
+        for: subject,
+        requester: { reference: 'PractitionerRole/dr-' + r.provider.practitioner.split(' ').pop().toLowerCase(), display: r.provider.practitioner },
+        owner: ORG,
+        businessStatus: { text: o.statusText },
+      };
+      if (o.note) task.note = [{ authorReference: ORG, time: new Date().toISOString().slice(0, 19) + 'Z', text: o.note }];
+      return {
+        resourceType: 'Bundle',
+        type: 'transaction',
+        entry: [...sessionEntries, daysEntry, strengthEntry, minEntry, { resource: task, request: { method: 'PUT', url: 'Task/' + taskId } }],
+      };
     },
     // Pretty-print a JS object as syntax-highlighted JSON HTML
     jsonHtml: (obj) => {

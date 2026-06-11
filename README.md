@@ -21,7 +21,10 @@ Vivo acting as a **Light Service Provider** (per the PA IG):
 - **Submit progress report** - Exercise Vital Sign measures computed live from the included class
   sessions, with an honest FHIR preview: a PA IG-conformant transaction Bundle (per-session
   activity-measure Observations, the three weekly EVS rollups with derivedFrom links, and the
-  Task update carrying businessStatus and notes) built from the form state in real time
+  Task update carrying businessStatus and notes) built from the form state in real time. Warns
+  when the selected week was already reported; sending appends to the report history
+- **Submitted reports** - per-referral report history on the detail screen (sent date, type,
+  period, measures) with a Details modal showing the FHIR Bundle as sent
 - **Close out referral** - final report with measures vs baseline
 - **Connections** - care manager FHIR endpoint management (SMART Backend Services)
 - **FHIR activity log** - request/response log with full FHIR payloads
